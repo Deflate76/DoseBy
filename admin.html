@@ -1,1 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doseby Admin - 관리자 로그인</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #f8fafc; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
 
+    <div id="login-section" class="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
+        <h1 class="mb-6 text-2xl font-bold text-center text-gray-800">Doseby Admin</h1>
+        <p class="mb-8 text-center text-gray-600">관리자 계정으로 로그인하세요.</p>
+        <button id="btn-login" class="flex items-center justify-center w-full px-4 py-2 text-white transition bg-blue-600 rounded-md hover:bg-blue-700">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" class="w-6 h-6 mr-2 bg-white rounded-full p-1">
+            Google 계정으로 로그인
+        </button>
+    </div>
+
+    <div id="admin-dashboard" class="hidden w-full max-w-4xl p-8 bg-white rounded-lg shadow-md">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">Doseby 관리자 대시보드</h1>
+            <button id="btn-logout" class="px-4 py-2 text-sm font-medium text-red-600 border border-red-600 rounded-md hover:bg-red-50">로그아웃</button>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="p-4 border rounded-lg bg-blue-50">
+                <h3 class="font-semibold text-blue-800">사용자 정보</h3>
+                <p id="user-info" class="mt-2 text-sm text-gray-600">불러오는 중...</p>
+            </div>
+            <div class="p-4 border rounded-lg">
+                <h3 class="font-semibold text-gray-800">데이터 관리</h3>
+                <ul class="mt-2 space-y-2 text-sm text-blue-600">
+                    <li><a href="#" class="hover:underline">의약품 DB 수정</a></li>
+                    <li><a href="#" class="hover:underline">건강기능식품 용량 설정</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+
+        // Firebase 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyBZZOOEgvGG1b7LR0HgS3DcS0N9v8dGXCc",
+            authDomain: "doseby-585d7.firebaseapp.com",
+            projectId: "doseby-585d7",
+            storageBucket: "doseby-585d7.firebasestorage.app",
+            messagingSenderId: "96877152271",
+            appId: "1:96877152271:web:aa3af1ce766897db25fb7a",
+            measurementId: "G-0LHJ4D0ERN"
+        };
+
+        // Firebase 초기화
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
+        const loginSection = document.getElementById('login-section');
+        const adminDashboard = document.getElementById('admin-dashboard');
+        const userInfo = document.getElementById('user-info');
+
+        // 로그인 버튼 클릭
+        document.getElementById('btn-login').addEventListener('click', () => {
+            signInWithPopup(auth, provider)
+                .then((result) => {
+                    console.log("로그인 성공:", result.user);
+                }).catch((error) => {
+                    console.error("로그인 실패:", error);
+                    alert("로그인에 실패했습니다.");
+                });
+        });
+
+        // 로그아웃 버튼 클릭
+        document.getElementById('btn-logout').addEventListener('click', () => {
+            signOut(auth).then(() => {
+                alert("로그아웃 되었습니다.");
+            });
+        });
+
+        // 인증 상태 감시
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // 관리자 이메일 제한을 두고 싶다면 여기에 조건문을 추가하세요.
+                // if (user.email === 'admin@doseby.com') { ... }
+                loginSection.classList.add('hidden');
+                adminDashboard.classList.remove('hidden');
+                userInfo.textContent = `${user.displayName} (${user.email})님 환영합니다.`;
+            } else {
+                loginSection.classList.remove('hidden');
+                adminDashboard.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
