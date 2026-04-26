@@ -1,91 +1,187 @@
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doseby Admin - 통합 관리 시스템</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .hidden { display: none; }
+        .admin-card { border-left: 4px solid #ef4444; }
+        .public-card { border-left: 4px solid #3b82f6; }
+        #console-log::-webkit-scrollbar { width: 8px; }
+        #console-log::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyBZZOOEgvGG1b7LR0HgS3DcS0N9v8dGXCc",
-        authDomain: "doseby-585d7.firebaseapp.com",
-        projectId: "doseby-585d7",
-        storageBucket: "doseby-585d7.firebasestorage.app",
-        messagingSenderId: "96877152271",
-        appId: "1:96877152271:web:aa3af1ce766897db25fb7a",
-        measurementId: "G-0LHJ4D0ERN"
-    };
+    <div id="login-section" class="flex items-center justify-center min-h-screen">
+        <div class="w-full max-w-md p-10 bg-white rounded-2xl shadow-xl text-center">
+            <div class="inline-block p-4 mb-4 bg-blue-50 rounded-full">
+                <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.673.337a4 4 0 01-1.909.494H4.8c-.18 0-.353.039-.508.107m7.477-9.277l4.474 8.948m-8.948 0L7.16 5.83M7 20h10"></path></svg>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800 mb-2">Doseby Admin</h1>
+            <p class="text-gray-500 mb-8">의약품 및 건강기능식품 데이터 관리</p>
+            <button id="btn-login" class="flex items-center justify-center w-full px-4 py-3 text-white bg-gray-900 rounded-xl hover:bg-black transition-all transform hover:scale-[1.02]">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" class="w-5 h-5 mr-3">
+                관리자 계정으로 로그인
+            </button>
+        </div>
+    </div>
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const provider = new GoogleAuthProvider();
+    <div id="admin-dashboard" class="hidden container mx-auto px-4 py-10">
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+            <div>
+                <h1 class="text-3xl font-extrabold text-gray-900">Doseby Control Center</h1>
+                <p id="user-display" class="text-blue-600 font-medium mt-1"></p>
+            </div>
+            <button id="btn-logout" class="px-6 py-2 bg-white text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition shadow-sm">로그아웃</button>
+        </header>
 
-    // UI 요소
-    const loginSection = document.getElementById('login-section');
-    const adminDashboard = document.getElementById('admin-dashboard');
-    const consoleLog = document.getElementById('console-log');
-    const userDisplay = document.getElementById('user-display');
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            <section class="public-card bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                <div class="flex items-center mb-6">
+                    <span class="p-3 bg-blue-50 text-blue-600 rounded-xl mr-4">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                    </span>
+                    <h2 class="text-xl font-bold text-gray-800">공공 데이터 관리</h2>
+                </div>
+                <p class="text-gray-500 mb-8 text-sm leading-relaxed">의약품 DB 및 건강기능식품 용량 정보. 일반 사용자에게 공개되는 데이터입니다.</p>
+                <div class="grid grid-cols-1 gap-3">
+                    <button onclick="handleFireStore('save', 'public_data', 'medicine_info')" class="w-full py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">의약품 정보 업데이트</button>
+                    <button onclick="handleFireStore('read', 'public_data', 'medicine_info')" class="w-full py-3 px-4 bg-white text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition font-medium">저장된 데이터 확인</button>
+                </div>
+            </section>
 
-    function log(msg, isError = false) {
-        const time = new Date().toLocaleTimeString();
-        const colorClass = isError ? 'text-red-400' : 'text-green-400';
-        consoleLog.innerHTML += `<div class="${colorClass}">[${time}] ${msg}</div>`;
-        consoleLog.scrollTop = consoleLog.scrollHeight;
-    }
+            <section class="admin-card bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                <div class="flex items-center mb-6">
+                    <span class="p-3 bg-red-50 text-red-600 rounded-xl mr-4">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    </span>
+                    <h2 class="text-xl font-bold text-gray-800">시스템 보안 설정</h2>
+                </div>
+                <p class="text-gray-500 mb-8 text-sm leading-relaxed">관리자 전용 설정 및 시스템 로그. <strong>특정 관리자 이메일</strong>만 접근 가능합니다.</p>
+                <div class="grid grid-cols-1 gap-3">
+                    <button onclick="handleFireStore('save', 'admin_data', 'system_config')" class="w-full py-3 px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition font-medium">환경설정 동기화</button>
+                    <button onclick="handleFireStore('read', 'admin_data', 'system_config')" class="w-full py-3 px-4 bg-white text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition font-medium">보안 로그 및 설정 조회</button>
+                </div>
+            </section>
+        </div>
 
-    // 로그인 핸들러
-    document.getElementById('btn-login').addEventListener('click', async () => {
-        try {
-            await signInWithPopup(auth, provider);
-        } catch (error) {
-            alert(`로그인 실패: ${error.code}`);
+        <div class="mt-10 bg-gray-900 rounded-2xl overflow-hidden shadow-2xl">
+            <div class="px-5 py-3 bg-gray-800 border-b border-gray-700 flex justify-between items-center">
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">System Live Console</span>
+                <div class="flex space-x-2">
+                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                </div>
+            </div>
+            <div id="console-log" class="p-6 h-48 overflow-y-auto font-mono text-sm leading-relaxed">
+                <div class="text-gray-500">// 시스템 통신 대기 중...</div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+
+        // 1. Firebase 초기 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyBZZOOEgvGG1b7LR0HgS3DcS0N9v8dGXCc",
+            authDomain: "doseby-585d7.firebaseapp.com",
+            projectId: "doseby-585d7",
+            storageBucket: "doseby-585d7.firebasestorage.app",
+            messagingSenderId: "96877152271",
+            appId: "1:96877152271:web:aa3af1ce766897db25fb7a",
+            measurementId: "G-0LHJ4D0ERN"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+
+        // UI 제어 변수
+        const loginSection = document.getElementById('login-section');
+        const adminDashboard = document.getElementById('admin-dashboard');
+        const userDisplay = document.getElementById('user-display');
+        const consoleLog = document.getElementById('console-log');
+
+        // 로그 출력 함수
+        function log(msg, type = 'info') {
+            const time = new Date().toLocaleTimeString();
+            let color = 'text-green-400';
+            if (type === 'error') color = 'text-red-400';
+            if (type === 'warn') color = 'text-yellow-400';
+
+            const entry = document.createElement('div');
+            entry.className = `mb-1 ${color}`;
+            entry.innerHTML = `<span class="text-gray-600">[${time}]</span> ${msg}`;
+            consoleLog.appendChild(entry);
+            consoleLog.scrollTop = consoleLog.scrollHeight;
         }
-    });
 
-    // 로그아웃 핸들러
-    document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
-
-    // 인증 상태 감시
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            // 일단 로그인만 되면 대시보드를 보여줍니다.
-            // 실제 권한은 데이터를 요청할 때 Firebase Security Rules가 판별합니다.
-            loginSection.classList.add('hidden');
-            adminDashboard.classList.remove('hidden');
-            userDisplay.innerText = `${user.displayName} (${user.email}) 접속 중`;
-            log("사용자 로그인 확인됨. 관리자 권한은 작업 시 검증됩니다.");
-        } else {
-            loginSection.classList.remove('hidden');
-            adminDashboard.classList.add('hidden');
-        }
-    });
-
-    // Firestore 데이터 저장 함수
-    window.saveData = async (collection, docId) => {
-        try {
-            const targetRef = doc(db, collection, docId);
-            await setDoc(targetRef, { 
-                lastUpdated: new Date().toISOString(),
-                updatedBy: auth.currentUser.email
-            }, { merge: true });
-            log(`[성공] ${collection}/${docId} 저장 완료.`);
-        } catch (e) {
-            // 규칙 위반 시(예: 다른 이메일로 로그인 시) 이곳으로 빠집니다.
-            log(`[권한 오류] 이메일 ${auth.currentUser.email}은(는) 이 영역에 쓰기 권한이 없습니다.`, true);
-        }
-    };
-
-    // Firestore 데이터 읽기 함수
-    window.readData = async (collection) => {
-        log(`[조회 시도] ${collection}...`);
-        try {
-            const docSnap = await getDoc(doc(db, collection, 'test_doc'));
-            if (docSnap.exists()) {
-                log(`데이터 로드 성공: ${JSON.stringify(docSnap.data())}`);
-            } else {
-                log(`${collection}에 'test_doc' 문서가 없습니다.`);
+        // 2. 인증 관리
+        document.getElementById('btn-login').addEventListener('click', async () => {
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                log(`로그인 실패: ${error.message}`, 'error');
             }
-        } catch (e) {
-            // 규칙 위반 시 이곳으로 빠집니다.
-            log(`[권한 오류] 이 영역에 대한 읽기 권한이 없습니다.`, true);
-        }
-    };
-</script>
+        });
+
+        document.getElementById('btn-logout').addEventListener('click', () => {
+            signOut(auth).then(() => {
+                log("로그아웃 되었습니다.");
+            });
+        });
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                loginSection.classList.add('hidden');
+                adminDashboard.classList.remove('hidden');
+                userDisplay.innerText = `● 접속 계정: ${user.email} (${user.displayName})`;
+                log(`사용자 인증됨: ${user.email}`);
+            } else {
+                loginSection.classList.remove('hidden');
+                adminDashboard.classList.add('hidden');
+                consoleLog.innerHTML = '<div class="text-gray-500">// 시스템 통신 대기 중...</div>';
+            }
+        });
+
+        // 3. Firestore 통합 처리 함수 (전역 할당)
+        window.handleFireStore = async (mode, collection, docId) => {
+            if (!auth.currentUser) return alert("로그인이 필요합니다.");
+
+            const docRef = doc(db, collection, docId);
+            log(`${mode === 'save' ? '저장' : '조회'} 요청 시작: ${collection}/${docId}...`);
+
+            try {
+                if (mode === 'save') {
+                    await setDoc(docRef, {
+                        last_action: "Updated via Web Admin",
+                        author: auth.currentUser.email,
+                        timestamp: serverTimestamp()
+                    }, { merge: true });
+                    log(`성공: ${collection} 데이터가 안전하게 저장되었습니다.`);
+                } else {
+                    const snap = await getDoc(docRef);
+                    if (snap.exists()) {
+                        log(`데이터 로드 성공: ${JSON.stringify(snap.data())}`);
+                    } else {
+                        log(`결과: 해당 경로에 데이터가 존재하지 않습니다.`, 'warn');
+                    }
+                }
+            } catch (error) {
+                // 이 부분이 Firebase Security Rules에 의해 차단되었을 때 실행됩니다.
+                log(`[보안 거부] ${error.code}: 접근 권한이 없습니다. 이메일을 확인하세요.`, 'error');
+                console.error(error);
+            }
+        };
+    </script>
+</body>
+</html>
