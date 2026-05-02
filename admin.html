@@ -55,8 +55,8 @@
                 <!-- 검색창 (레이아웃 침범 방지 적용) -->
                 <div class="flex flex-col xl:flex-row gap-2 mb-4 w-full">
                     <select id="search-type" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white text-gray-700 shrink-0 w-full xl:w-auto">
-                        <option value="ppmaincode">PP Main Code</option>
-                        <option value="ingredient">Ingredient</option>
+                        <option value="mainCode">주성분코드</option>
+                        <option value="ingredient">성분명</option>
                     </select>
                     <div class="flex gap-2 flex-1 w-full">
                         <input type="text" id="search-keyword" placeholder="검색어 입력..." class="border border-gray-300 rounded-lg px-3 py-2 flex-1 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-gray-700 min-w-0">
@@ -218,32 +218,32 @@
             const keyword = document.getElementById('search-keyword').value.trim();
 
             if (!keyword) return alert("검색어를 입력하세요.");
-            log(`/admin_data/DrugMaster/DrugDose 검색 시작: [${searchType} == ${keyword}]`);
+            
+            const searchLabel = searchType === 'mainCode' ? '주성분코드' : '성분명';
+            log(`/admin_data/DrugMaster/DrugDose 검색 시작: [${searchLabel} 포함 "${keyword}"]`);
 
             try {
                 const resultsList = document.getElementById('search-results-list');
                 resultsList.innerHTML = '';
                 let foundItems = [];
 
-                if (searchType === 'ppmaincode') {
-                    const docRef = doc(db, "admin_data", "DrugMaster", "DrugDose", keyword);
-                    const docSnap = await getDoc(docRef);
-
-                    if (docSnap.exists()) {
-                        foundItems.push({ id: docSnap.id, ...docSnap.data() });
-                    }
-                } 
-                else if (searchType === 'ingredient') {
-                    const collectionRef = collection(db, "admin_data", "DrugMaster", "DrugDose");
-                    const querySnapshot = await getDocs(collectionRef);
+                // 주성분코드, 성분명 모두 '포함 검색'을 위해 전체 문서를 가져와 필터링합니다.
+                const collectionRef = collection(db, "admin_data", "DrugMaster", "DrugDose");
+                const querySnapshot = await getDocs(collectionRef);
+                
+                querySnapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
                     
-                    querySnapshot.forEach((docSnap) => {
-                        const data = docSnap.data();
+                    if (searchType === 'mainCode') {
+                        if (data.주성분코드 && data.주성분코드.includes(keyword)) {
+                            foundItems.push({ id: docSnap.id, ...data });
+                        }
+                    } else if (searchType === 'ingredient') {
                         if (data.주성분명 && data.주성분명.includes(keyword)) {
                             foundItems.push({ id: docSnap.id, ...data });
                         }
-                    });
-                }
+                    }
+                });
 
                 if (foundItems.length === 0) {
                     resultsList.innerHTML = '<li class="text-sm text-gray-500 p-3 text-center">일치하는 약품 정보가 없습니다.</li>';
@@ -251,7 +251,7 @@
                 } else {
                     foundItems.forEach((data) => {
                         const mainIngredient = data.주성분명 || '주성분명 없음';
-                        const mainIngredientCode = data.주성분코드 || '주성분코드명 없음';
+                        const mainIngredientCode = data.주성분코드 || '주성분코드 없음';
                         
                         const li = document.createElement('li');
                         li.className = "flex justify-between items-center p-3 bg-white border rounded-lg shadow-sm";
