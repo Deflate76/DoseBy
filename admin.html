@@ -43,7 +43,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
             
             <!-- 공공 데이터 (약품 용량 관리) 섹션 -->
-            <section class="public-card bg-white p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
+            <section class="public-card bg-white p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
                 <div class="flex items-center mb-6">
                     <span class="p-3 bg-blue-50 text-blue-600 rounded-xl mr-4">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
@@ -51,14 +51,16 @@
                     <h2 class="text-xl font-bold text-gray-800">의약품 용량 관리</h2>
                 </div>
                 
-                <!-- 검색창 -->
-                <div class="flex gap-2 mb-4">
-                    <select id="search-type" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white text-gray-700">
+                <!-- 검색창 (레이아웃 침범 방지 적용) -->
+                <div class="flex flex-col xl:flex-row gap-2 mb-4 w-full">
+                    <select id="search-type" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white text-gray-700 shrink-0 w-full xl:w-auto">
                         <option value="ppmaincode">PP Main Code</option>
                         <option value="ingredient">Ingredient</option>
                     </select>
-                    <input type="text" id="search-keyword" placeholder="검색어 입력..." class="border border-gray-300 rounded-lg px-3 py-2 flex-1 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-gray-700">
-                    <button id="btn-search-drug" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-sm whitespace-nowrap">검색</button>
+                    <div class="flex gap-2 flex-1 w-full">
+                        <input type="text" id="search-keyword" placeholder="검색어 입력..." class="border border-gray-300 rounded-lg px-3 py-2 flex-1 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-gray-700 min-w-0">
+                        <button id="btn-search-drug" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-sm whitespace-nowrap shrink-0">검색</button>
+                    </div>
                 </div>
 
                 <!-- 검색 결과 리스트 -->
@@ -82,32 +84,32 @@
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                         <div class="col-span-1">
                             <label class="block text-xs text-gray-500 mb-1">Dose (double)</label>
-                            <input type="number" step="0.01" id="input-Dose" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
+                            <input type="number" step="0.01" id="input-Dose" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm min-w-0">
                         </div>
                         <div class="col-span-1">
                             <label class="block text-xs text-gray-500 mb-1">DoseUnit (string)</label>
-                            <input type="text" id="input-DoseUnit" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
+                            <input type="text" id="input-DoseUnit" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm min-w-0">
                         </div>
                         <div class="col-span-2">
                             <label class="block text-xs text-gray-500 mb-1">InCaseOf (string)</label>
-                            <input type="text" id="input-InCaseOf" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
+                            <input type="text" id="input-InCaseOf" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm min-w-0">
                         </div>
 
                         <div class="col-span-1">
                             <label class="block text-xs text-gray-500 mb-1">MinAge (int)</label>
-                            <input type="number" id="input-MinAge" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
+                            <input type="number" id="input-MinAge" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm min-w-0">
                         </div>
                         <div class="col-span-1">
                             <label class="block text-xs text-gray-500 mb-1">MaxAge (int)</label>
-                            <input type="number" id="input-MaxAge" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
+                            <input type="number" id="input-MaxAge" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm min-w-0">
                         </div>
                         <div class="col-span-1">
                             <label class="block text-xs text-gray-500 mb-1">MinBWT (double)</label>
-                            <input type="number" step="0.01" id="input-MinBWT" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
+                            <input type="number" step="0.01" id="input-MinBWT" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm min-w-0">
                         </div>
                         <div class="col-span-1">
                             <label class="block text-xs text-gray-500 mb-1">MaxBWT (double)</label>
-                            <input type="number" step="0.01" id="input-MaxBWT" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
+                            <input type="number" step="0.01" id="input-MaxBWT" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm min-w-0">
                         </div>
                     </div>
                     <button id="btn-save-dose" class="w-full py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium text-sm">리스트에 추가 및 저장</button>
@@ -173,7 +175,6 @@
 
         let currentSelectedDrugId = null;
 
-        // 로그 출력 함수
         function log(msg, type = 'info') {
             const time = new Date().toLocaleTimeString();
             let color = 'text-green-400';
@@ -187,7 +188,6 @@
             consoleLog.scrollTop = consoleLog.scrollHeight;
         }
 
-        // 인증 관리
         document.getElementById('btn-login').addEventListener('click', async () => {
             try { await signInWithPopup(auth, provider); } 
             catch (error) { log(`로그인 실패: ${error.message}`, 'error'); }
@@ -210,9 +210,6 @@
             }
         });
 
-        /* =========================================
-           1. 약품 검색 기능 (DrugDose Collection)
-        ========================================= */
         document.getElementById('btn-search-drug').addEventListener('click', async () => {
             if (!auth.currentUser) return alert("로그인이 필요합니다.");
 
@@ -227,7 +224,6 @@
                 resultsList.innerHTML = '';
                 let foundItems = [];
 
-                // 1. ppmaincode 검색: 문서 ID 기준 단건 조회
                 if (searchType === 'ppmaincode') {
                     const docRef = doc(db, "admin_data", "DrugMaster", "DrugDose", keyword);
                     const docSnap = await getDoc(docRef);
@@ -236,21 +232,18 @@
                         foundItems.push({ id: docSnap.id, ...docSnap.data() });
                     }
                 } 
-                // 2. ingredient 검색: 모든 문서 호출 후 '주성분명' 필드 포함 여부 확인 (클라이언트 단 필터링)
                 else if (searchType === 'ingredient') {
                     const collectionRef = collection(db, "admin_data", "DrugMaster", "DrugDose");
                     const querySnapshot = await getDocs(collectionRef);
                     
                     querySnapshot.forEach((docSnap) => {
                         const data = docSnap.data();
-                        // 필드가 존재하고, 키워드를 포함(includes)하는 경우에만 배열에 추가
                         if (data.주성분명 && data.주성분명.includes(keyword)) {
                             foundItems.push({ id: docSnap.id, ...data });
                         }
                     });
                 }
 
-                // 결과 렌더링
                 if (foundItems.length === 0) {
                     resultsList.innerHTML = '<li class="text-sm text-gray-500 p-3 text-center">일치하는 약품 정보가 없습니다.</li>';
                     log(`결과 없음: 일치하는 데이터가 존재하지 않습니다.`, 'warn');
@@ -266,7 +259,7 @@
                                 <p class="text-sm font-bold text-gray-800">${mainIngredient}</p>
                                 <p class="text-xs text-gray-500">코드: ${mainIngredientCode} | Doc ID: ${data.id}</p>
                             </div>
-                            <button class="px-4 py-1.5 bg-blue-100 text-blue-700 rounded-md text-xs font-bold hover:bg-blue-200 transition" 
+                            <button class="px-4 py-1.5 bg-blue-100 text-blue-700 rounded-md text-xs font-bold hover:bg-blue-200 transition shrink-0 ml-2" 
                                 onclick="window.selectDrug('${data.id}', '${mainIngredient}')">
                                 선택
                             </button>
@@ -277,7 +270,7 @@
                 }
 
                 document.getElementById('search-results-container').classList.remove('hidden');
-                document.getElementById('dose-detail-container').classList.add('hidden'); // 기존 열려있던 창 숨김
+                document.getElementById('dose-detail-container').classList.add('hidden'); 
 
             } catch (error) {
                 log(`검색 권한 오류 또는 실패: ${error.message}`, 'error');
@@ -285,9 +278,6 @@
             }
         });
 
-        /* =========================================
-           2. 약품 선택 및 용량 데이터 로드
-        ========================================= */
         window.selectDrug = async (drugId, label) => {
             currentSelectedDrugId = drugId;
             document.getElementById('selected-drug-label').innerText = `(${label})`;
@@ -295,7 +285,6 @@
             await loadDoseList(drugId);
         };
 
-        // 특정 약품의 doselist 문서 조회
         async function loadDoseList(drugId) {
             log(`용량 리스트(doselist) 로드 중... [DrugID: ${drugId}]`);
             const displayDiv = document.getElementById('dose-list-display');
@@ -334,9 +323,6 @@
             }
         }
 
-        /* =========================================
-           3. 용량 데이터 배열(List) 추가 및 저장
-        ========================================= */
         document.getElementById('btn-save-dose').addEventListener('click', async () => {
             if (!currentSelectedDrugId) return alert("먼저 검색 후 약품을 선택해주세요.");
             
@@ -374,7 +360,6 @@
             }
         });
 
-        // 보안 설정용 함수
         window.handleFireStore = async (mode, collectionName, docId) => {
             if (!auth.currentUser) return alert("로그인이 필요합니다.");
             const docRef = doc(db, collectionName, docId);
