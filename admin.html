@@ -149,7 +149,6 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
-        // 검색(query, where, getDocs) 및 배열 추가(arrayUnion) 함수 추가
         import { getFirestore, doc, setDoc, getDoc, serverTimestamp, collection, query, where, getDocs, arrayUnion } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -172,7 +171,7 @@
         const userDisplay = document.getElementById('user-display');
         const consoleLog = document.getElementById('console-log');
 
-        let currentSelectedDrugId = null; // 선택된 약품 문서 ID 저장 변수
+        let currentSelectedDrugId = null;
 
         // 로그 출력 함수
         function log(msg, type = 'info') {
@@ -212,7 +211,7 @@
         });
 
         /* =========================================
-           1. 약품 검색 기능 (DrugMaster Collection)
+           1. 약품 검색 기능 (DrugDose Collection)
         ========================================= */
         document.getElementById('btn-search-drug').addEventListener('click', async () => {
             if (!auth.currentUser) return alert("로그인이 필요합니다.");
@@ -221,39 +220,62 @@
             const keyword = document.getElementById('search-keyword').value.trim();
 
             if (!keyword) return alert("검색어를 입력하세요.");
-            log(`DrugMaster 검색 시작: [${searchType} == ${keyword}]`);
+            log(`/admin_data/DrugMaster/DrugDose 검색 시작: [${searchType} == ${keyword}]`);
 
             try {
-                // DrugMaster를 컬렉션으로 간주하여 검색합니다. 
-                // (만약 admin_data 내의 하위 컬렉션이라면 collection(db, "admin_data", "DrugMaster", "Items") 형태로 수정 필요)
-                const q = query(collection(db, "DrugMaster"), where(searchType, "==", keyword));
-                const querySnapshot = await getDocs(q);
-
                 const resultsList = document.getElementById('search-results-list');
                 resultsList.innerHTML = '';
-                
-                if (querySnapshot.empty) {
+                let foundItems = [];
+
+                // 1. ppmaincode 검색: 문서 ID 기준 단건 조회
+                if (searchType === 'ppmaincode') {
+                    const docRef = doc(db, "admin_data", "DrugMaster", "DrugDose", keyword);
+                    const docSnap = await getDoc(docRef);
+
+                    if (docSnap.exists()) {
+                        foundItems.push({ id: docSnap.id, ...docSnap.data() });
+                    }
+                } 
+                // 2. ingredient 검색: 모든 문서 호출 후 '주성분명' 필드 포함 여부 확인 (클라이언트 단 필터링)
+                else if (searchType === 'ingredient') {
+                    const collectionRef = collection(db, "admin_data", "DrugMaster", "DrugDose");
+                    const querySnapshot = await getDocs(collectionRef);
+                    
+                    querySnapshot.forEach((docSnap) => {
+                        const data = docSnap.data();
+                        // 필드가 존재하고, 키워드를 포함(includes)하는 경우에만 배열에 추가
+                        if (data.주성분명 && data.주성분명.includes(keyword)) {
+                            foundItems.push({ id: docSnap.id, ...data });
+                        }
+                    });
+                }
+
+                // 결과 렌더링
+                if (foundItems.length === 0) {
                     resultsList.innerHTML = '<li class="text-sm text-gray-500 p-3 text-center">일치하는 약품 정보가 없습니다.</li>';
                     log(`결과 없음: 일치하는 데이터가 존재하지 않습니다.`, 'warn');
                 } else {
-                    querySnapshot.forEach((docSnap) => {
-                        const data = docSnap.data();
+                    foundItems.forEach((data) => {
+                        const mainIngredient = data.주성분명 || '주성분명 없음';
+                        const mainIngredientCode = data.주성분코드명 || '주성분코드명 없음';
+                        
                         const li = document.createElement('li');
                         li.className = "flex justify-between items-center p-3 bg-white border rounded-lg shadow-sm";
                         li.innerHTML = `
                             <div>
-                                <p class="text-sm font-bold text-gray-800">${data.ppmaincode || 'N/A'}</p>
-                                <p class="text-xs text-gray-500">${data.ingredient || 'N/A'}</p>
+                                <p class="text-sm font-bold text-gray-800">${mainIngredient}</p>
+                                <p class="text-xs text-gray-500">코드: ${mainIngredientCode} | Doc ID: ${data.id}</p>
                             </div>
                             <button class="px-4 py-1.5 bg-blue-100 text-blue-700 rounded-md text-xs font-bold hover:bg-blue-200 transition" 
-                                onclick="window.selectDrug('${docSnap.id}', '${data.ppmaincode || data.ingredient}')">
+                                onclick="window.selectDrug('${data.id}', '${mainIngredient}')">
                                 선택
                             </button>
                         `;
                         resultsList.appendChild(li);
                     });
-                    log(`검색 완료: ${querySnapshot.size}건의 약품 발견.`);
+                    log(`검색 완료: ${foundItems.length}건의 약품 발견.`);
                 }
+
                 document.getElementById('search-results-container').classList.remove('hidden');
                 document.getElementById('dose-detail-container').classList.add('hidden'); // 기존 열려있던 창 숨김
 
@@ -318,7 +340,6 @@
         document.getElementById('btn-save-dose').addEventListener('click', async () => {
             if (!currentSelectedDrugId) return alert("먼저 검색 후 약품을 선택해주세요.");
             
-            // 데이터 타입 엄격 준수 (double, int64, string)
             const newDose = {
                 Dose: parseFloat(document.getElementById('input-Dose').value) || 0.0,
                 DoseUnit: document.getElementById('input-DoseUnit').value || "",
@@ -334,7 +355,6 @@
             try {
                 log(`[${currentSelectedDrugId}] 용량 정보 추가 저장 중...`);
                 
-                // doses 필드(배열)에 새로운 객체를 추가 (문서가 없으면 생성됨)
                 await setDoc(doseListRef, {
                     doses: arrayUnion(newDose),
                     last_updated: serverTimestamp(),
@@ -343,11 +363,9 @@
 
                 log(`성공: 용량 리스트가 안전하게 업데이트 되었습니다.`);
                 
-                // 입력 필드 초기화
                 const inputs = document.querySelectorAll('#dose-detail-container input');
                 inputs.forEach(input => input.value = '');
 
-                // 리스트 다시 로드하여 갱신된 UI 표시
                 await loadDoseList(currentSelectedDrugId);
 
             } catch (error) {
@@ -356,7 +374,7 @@
             }
         });
 
-        // 기존 보안 설정용 함수 유지
+        // 보안 설정용 함수
         window.handleFireStore = async (mode, collectionName, docId) => {
             if (!auth.currentUser) return alert("로그인이 필요합니다.");
             const docRef = doc(db, collectionName, docId);
