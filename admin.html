@@ -257,7 +257,7 @@
                 } else {
                     foundItems.forEach((data) => {
                         const mainIngredient = data.주성분명 || '주성분명 없음';
-                        const mainIngredientCode = data.주성분코드명 || '주성분코드명 없음';
+                        const mainIngredientCode = data.주성분코드 || '주성분코드명 없음';
                         
                         const li = document.createElement('li');
                         li.className = "flex justify-between items-center p-3 bg-white border rounded-lg shadow-sm";
